@@ -14,6 +14,8 @@ import os
 import sys
 from itertools import dropwhile
 
+import appdirs
+import configobj
 from nagare import commands
 from nagare.services.services import Services
 
@@ -25,8 +27,8 @@ BANNER = '''\
   | |\  | (_| | (_| | (_| | | |  __/
   |_| \_|\__,_|\__, |\__,_|_|  \___|
                |___/
-
-                http://www.nagare.org\
+                       http://naga.re
+                http://www.nagare.org
 '''  # noqa: W291
 
 
@@ -40,7 +42,7 @@ def find_path(choices, name):
 
 class ArgumentParser(commands.ArgumentParser):
     def format_help(self):
-        return BANNER + '\n\n\n' + super(ArgumentParser, self).format_help()
+        return BANNER + '\n' + super(ArgumentParser, self).format_help()
 
 
 class Command(commands.Command):
@@ -50,27 +52,45 @@ class Command(commands.Command):
     SERVICES_FACTORY = Services
 
     @classmethod
-    def _create_service(cls, config_filename, activated_by_default, roots=(), **vars):
+    def _create_service(cls, config, config_filename, activated_by_default, roots=(), **vars):
         root_path = find_path(roots, '')
 
         env_vars = {k: v.replace('$', '$$') for k, v in os.environ.items()}
         env_vars.update(vars)
 
+        has_user_config, user_config = cls.get_user_data_file()
+
         return cls.SERVICES_FACTORY(
-            config_filename, '', 'nagare.services', activated_by_default,
+            config, '', 'nagare.services', activated_by_default,
             root=root_path, root_path=root_path,
             here=os.path.dirname(config_filename) if config_filename else '',
             config_filename=config_filename or '',
+            user_config_filename=user_config if has_user_config else '',
             **env_vars
         )
 
+    @staticmethod
+    def get_user_data_file():
+        user_data_dir = appdirs.user_data_dir('nagare')
+        user_data_file = os.path.join(user_data_dir, 'nagare.cfg')
+
+        return os.path.isfile(user_data_file), user_data_file
+
     def _run(self, next_method=None, config_filename=None, **arguments):
-        config = Services().read_config(
+        if self.WITH_CONFIG_FILENAME:
+            has_user_data_file, user_data_file = self.get_user_data_file()
+
+            config = configobj.ConfigObj(user_data_file if has_user_data_file else {})
+            config.merge(configobj.ConfigObj(config_filename))
+        else:
+            config = None
+
+        activation_config = Services().read_config(
             {'activated_by_default': 'boolean(default=True)'},
-            config_filename, 'services'
+            config, 'services'
         )
 
-        services = self._create_service(config_filename, config['activated_by_default'])
+        services = self._create_service(config, config_filename, activation_config['activated_by_default'])
 
         publisher = services.get('publisher')
         if self.WITH_STARTED_SERVICES and publisher:
@@ -112,7 +132,7 @@ class Command(commands.Command):
 
 class Commands(commands.Commands):
     def usage(self, names, args):
-        print(BANNER + '\n\n')
+        print(BANNER)
 
         return super(Commands, self).usage(names, args)
 
