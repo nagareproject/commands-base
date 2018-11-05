@@ -41,9 +41,8 @@ class Info(admin.Command):
         print('%s %s\n' % (implementation, sys.version))
 
         has_user_data_file, user_data_file = cls.get_user_data_file()
-        print('Default configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else '') + user_data_file)
+        print('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else '') + user_data_file)
         print('')
-
 
         activated_columns = {'package', 'version'}
         if location:

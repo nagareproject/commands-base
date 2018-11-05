@@ -29,7 +29,7 @@ BANNER = '''\
                |___/
                        http://naga.re
                 http://www.nagare.org
-'''  # noqa: W291
+'''  # noqa: W605, W291
 
 
 def find_path(choices, name):
@@ -41,6 +41,7 @@ def find_path(choices, name):
 
 
 class ArgumentParser(commands.ArgumentParser):
+
     def format_help(self):
         return BANNER + '\n' + super(ArgumentParser, self).format_help()
 
@@ -73,6 +74,8 @@ class Command(commands.Command):
     def get_user_data_file():
         user_data_dir = appdirs.user_data_dir('nagare')
         user_data_file = os.path.join(user_data_dir, 'nagare.cfg')
+
+        user_data_file = os.environ.get('NAGARE_USER_CONFIG', user_data_file)
 
         return os.path.isfile(user_data_file), user_data_file
 
@@ -114,7 +117,7 @@ class Command(commands.Command):
             try:
                 config_filename = arguments['config_filename']
                 if config_filename is None:
-                    config_filename = os.environ.get('NAGARE_CONF')
+                    config_filename = os.environ.get('NAGARE_CONFIG')
 
                 if config_filename is None:
                     raise commands.ArgumentError(message="config filename missing")
