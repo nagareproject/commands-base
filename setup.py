@@ -29,7 +29,10 @@ setup(
     zip_safe=False,
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
-    install_requires=['appdirs', 'nagare-services', 'nagare-commands'],
+    install_requires=[
+        'appdirs', 'colorama',
+        'nagare-services', 'nagare-commands'
+    ],
     entry_points='''
     [console_scripts]
     nagare-admin = nagare.admin.admin:run

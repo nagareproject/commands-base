@@ -37,19 +37,22 @@ class Info(admin.Command):
         else:
             implementation = sys.implementation.name.capitalize()
 
-        print(admin.BANNER)
-        print('%s %s\n' % (implementation, sys.version))
+        with admin.Banner() as display:
+            display((implementation + ' ' + sys.version).splitlines())
+            display()
 
-        has_user_data_file, user_data_file = cls.get_user_data_file()
-        print('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else '') + user_data_file)
-        print('')
+            has_user_data_file, user_data_file = cls.get_user_data_file()
+            display('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else ''))
+            display('  ' + user_data_file)
+            display('')
 
-        activated_columns = {'package', 'version'}
-        if location:
-            activated_columns.add('location')
+            activated_columns = {'package', 'version'}
+            if location:
+                activated_columns.add('location')
 
-        print('Nagare packages:\n')
-        nagare_packages = [(dist,) for dist in pkg_resources.working_set if dist.project_name.startswith('nagare-')]
-        reporters.PackagesReporter().report(activated_columns, nagare_packages)
+            display('Nagare packages:')
+            display()
+            nagare_packages = [(dist,) for dist in pkg_resources.working_set if dist.project_name.startswith('nagare-')]
+            reporters.PackagesReporter().report(activated_columns, nagare_packages, display=display)
 
-        return 0
+            return 0

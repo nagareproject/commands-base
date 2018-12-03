@@ -15,21 +15,44 @@ import sys
 from itertools import dropwhile
 
 import appdirs
+
 import configobj
 from nagare import commands
+from colorama import Fore, Style
 from nagare.services.services import Services
 
+KAKEMONO = r"""
+ ,,       ;
+  '; ''';'''''''
+,,     ,' ,,,;,
+ ';   '''''   '
+   ,   ;  ;  ;
+  ,;   ;  ;  ;
+ ,;    ;  ;  ; ,
+,;   ,;'  '  ',;
 
-BANNER = '''\
-   _   _
-  | \ | | __ _  __ _  __ _ _ __ ___
-  |  \| |/ _` |/ _` |/ _` | '__/ _ \ 
-  | |\  | (_| | (_| | (_| | | |  __/
-  |_| \_|\__,_|\__, |\__,_|_|  \___|
-               |___/
-                       http://naga.re
-                http://www.nagare.org
-'''  # noqa: W605, W291
+    ;
+    ;   ,,,
+ '''; ,;'  ;
+    ;;'    ;
+   ,;      ;
+ ,;';      ;   ,
+    ;      ',,;'
+    '
+"""
+
+BANNER = r"""
+ _   _
+| \ | | __ _  __ _  __ _ _ __ ___
+|  \| |/ _` |/ _` |/ _` | '__/ _ \
+| |\  | (_| | (_| | (_| | | |  __/
+|_| \_|\__,_|\__, |\__,_|_|  \___|
+             |___/
+                     http://naga.re
+              http://www.nagare.org
+
+
+""".lstrip('\n')  # noqa: W605, W291
 
 
 def find_path(choices, name):
@@ -40,10 +63,62 @@ def find_path(choices, name):
     return next(dropwhile(lambda dir: not os.path.isdir(dir), choices), '')
 
 
-class ArgumentParser(commands.ArgumentParser):
+class Banner(object):
+    def __init__(self, banner=BANNER, padding='  '):
+        self.banner = banner
+        self.kakemono = KAKEMONO.strip('\n').replace('|', ' ').splitlines()
+        self.kakemono_width = max(map(len, self.kakemono))
+        self.padding = padding
+        self.first = True
 
-    def format_help(self):
-        return BANNER + '\n' + super(ArgumentParser, self).format_help()
+    def display(self, lines='', file=None):
+        file = file or sys.stderr
+
+        if self.first:
+            self.first = False
+            self.display(self.banner.splitlines())
+
+        for line in ([lines] if isinstance(lines, str) else lines):
+            kakemono = self.kakemono.pop(0) if self.kakemono else (' ' * self.kakemono_width)
+            file.write(''.join((
+                Fore.GREEN, Style.BRIGHT,
+                kakemono.ljust(self.kakemono_width),
+                Style.RESET_ALL,
+                self.padding, line,
+                '\n')
+            ))
+            file.flush()
+
+    def end(self):
+        if not self.first:
+            while self.kakemono:
+                self.display()
+
+    def __enter__(self):
+        return self.display
+
+    def __exit__(self, *args):
+        self.end()
+
+
+class ArgumentParser(commands.ArgumentParser):
+    def __init__(self, *args, **kw):
+        super(ArgumentParser, self).__init__(*args, **kw)
+        self.banner = Banner()
+
+    def _print_message(self, message, file=None):
+        self.banner.display(message.splitlines(), file)
+
+    def end(self):
+        self.banner.end()
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message('\n' + message)
+
+        self.banner.end()
+
+        super(ArgumentParser, self).exit(status)
 
 
 class Command(commands.Command):
@@ -53,7 +128,7 @@ class Command(commands.Command):
     SERVICES_FACTORY = Services
 
     @classmethod
-    def _create_service(cls, config, config_filename, activated_by_default, roots=(), **vars):
+    def _create_services(cls, config, config_filename, roots=(), **vars):
         root_path = find_path(roots, '')
 
         env_vars = {k: v.replace('$', '$$') for k, v in os.environ.items()}
@@ -62,7 +137,7 @@ class Command(commands.Command):
         has_user_config, user_config = cls.get_user_data_file()
 
         return cls.SERVICES_FACTORY(
-            config, '', 'nagare.services', activated_by_default,
+            config, '', 'nagare.services',
             root=root_path, root_path=root_path,
             here=os.path.dirname(config_filename) if config_filename else '',
             config_filename=config_filename or '',
@@ -84,16 +159,11 @@ class Command(commands.Command):
             has_user_data_file, user_data_file = self.get_user_data_file()
 
             config = configobj.ConfigObj(user_data_file if has_user_data_file else {})
-            config.merge(configobj.ConfigObj(config_filename))
+            config.merge(configobj.ConfigObj(config_filename, interpolation=False))
         else:
             config = None
 
-        activation_config = Services().read_config(
-            {'activated_by_default': 'boolean(default=True)'},
-            config, 'services'
-        )
-
-        services = self._create_service(config, config_filename, activation_config['activated_by_default'])
+        services = self._create_services(config, config_filename)
 
         publisher = services.get('publisher')
         if self.WITH_STARTED_SERVICES and publisher:
@@ -110,8 +180,8 @@ class Command(commands.Command):
         if self.WITH_CONFIG_FILENAME:
             parser.add_argument('config_filename', nargs='?', help='Configuration file')
 
-    def parse(self, command_name, args):
-        parser, arguments = super(Command, self).parse(command_name, args)
+    def parse(self, command_name, parser, args):
+        arguments = super(Command, self).parse(command_name, parser, args)
 
         if self.WITH_CONFIG_FILENAME:
             try:
@@ -128,16 +198,19 @@ class Command(commands.Command):
                 arguments['config_filename'] = os.path.abspath(os.path.expanduser(config_filename))
             except commands.ArgumentError:
                 parser.print_usage(sys.stderr)
+                parser.end()
                 raise
 
-        return parser, arguments
+        return arguments
 
 
 class Commands(commands.Commands):
-    def usage(self, names, args):
-        print(BANNER)
+    def _create_parser(self, name):
+        return ArgumentParser(name, description=self.DESC)
 
-        return super(Commands, self).usage(names, args)
+    def usage(self, names, args):
+        with Banner() as display:
+            super(Commands, self).usage(names, args, display)
 
 # ---------------------------------------------------------------------------
 
