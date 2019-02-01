@@ -18,7 +18,7 @@ import appdirs
 
 import configobj
 from nagare import commands
-from colorama import Fore, Style
+from colorama import init, Fore, Style
 from nagare.services.services import Services
 
 KAKEMONO = r"""
@@ -205,6 +205,9 @@ class Command(commands.Command):
 
 
 class Commands(commands.Commands):
+    def usage_name(self, ljust=0):
+        return Style.BRIGHT + super(Commands, self).usage_name(ljust) + Style.RESET_ALL
+
     def _create_parser(self, name):
         return ArgumentParser(name, description=self.DESC)
 
@@ -216,4 +219,5 @@ class Commands(commands.Commands):
 
 
 def run():
+    init()
     return Commands(entry_points='nagare.commands').execute()
