@@ -154,7 +154,7 @@ class Command(commands.Command):
 
         return os.path.isfile(user_data_file), user_data_file
 
-    def _run(self, next_method=None, config_filename=None, **arguments):
+    def _run(self, command_names, next_method=None, config_filename=None, **arguments):
         if self.WITH_CONFIG_FILENAME:
             has_user_data_file, user_data_file = self.get_user_data_file()
 
@@ -203,6 +203,9 @@ class Command(commands.Command):
 
         return arguments
 
+    def display_command(self, top_level, indent, display):
+        display('{}- {}: {}'.format(' ' * (indent * 4), self.name, self.DESC))
+
 
 class Commands(commands.Commands):
     def usage_name(self, ljust=0):
@@ -211,13 +214,39 @@ class Commands(commands.Commands):
     def _create_parser(self, name):
         return ArgumentParser(name, description=self.DESC)
 
-    def usage(self, names, args):
+    def set_arguments(self, parser):
+        parser.add_argument('-a', '--all', action='store_true', help='show all the sub-commands')
+        super(Commands, self).set_arguments(parser)
+
+    def run(self, command_names, all, subcommands):
+        if subcommands or not all:
+            return super(Commands, self).run(command_names, subcommands)
+
         with Banner() as display:
-            super(Commands, self).usage(names, args, display)
+            self.display_command(len(command_names) == 1, 0, display)
+
+        return 0
+
+    def usage(self, names):
+        with Banner() as display:
+            super(Commands, self).usage(names, display)
+
+    def display_command(self, top_level, indent, display):
+        display('{}* {} ({})'.format(' ' * (indent * 4), self.name, self.DESC))
+        display()
+
+        for _, sub_command in sorted(self.items()):
+            sub_command.display_command(False, indent + 1, display)
+            if top_level:
+                display()
+
+
+class NagareCommands(Commands):
+    DESC = 'Nagare commands'
 
 # ---------------------------------------------------------------------------
 
 
 def run():
     init()
-    return Commands(entry_points='nagare.commands').execute()
+    return NagareCommands(entry_points='nagare.commands').execute()
