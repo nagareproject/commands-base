@@ -180,8 +180,8 @@ class Command(commands.Command):
         if self.WITH_CONFIG_FILENAME:
             parser.add_argument('config_filename', nargs='?', help='Configuration file')
 
-    def parse(self, command_name, parser, args):
-        arguments = super(Command, self).parse(command_name, parser, args)
+    def parse(self, parser, args):
+        arguments = super(Command, self).parse(parser, args)
 
         if self.WITH_CONFIG_FILENAME:
             try:
