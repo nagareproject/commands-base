@@ -30,7 +30,7 @@ setup(
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
     install_requires=[
-        'appdirs', 'colorama',
+        'appdirs', 'colorama==0.3.7',
         'nagare-services', 'nagare-commands'
     ],
     entry_points='''
