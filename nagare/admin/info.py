@@ -52,7 +52,11 @@ class Info(admin.Command):
 
             display('Nagare packages:')
             display()
-            nagare_packages = [(dist,) for dist in pkg_resources.working_set if dist.project_name.startswith('nagare-')]
+            nagare_packages = [
+                (dist,)
+                for dist in pkg_resources.working_set
+                if dist.project_name.startswith('nagare-') or (dist.project_name == 'nagare')
+            ]
             reporters.PackagesReporter().report(activated_columns, nagare_packages, display=display)
 
             return 0
