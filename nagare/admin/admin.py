@@ -190,10 +190,10 @@ class Command(commands.Command):
                     config_filename = os.environ.get('NAGARE_CONFIG')
 
                 if config_filename is None:
-                    raise commands.ArgumentError(message="config filename missing")
+                    raise commands.ArgumentError("config filename missing")
 
                 if not os.path.exists(config_filename):
-                    raise commands.ArgumentError(message="config filename <%s> doesn't exist" % config_filename)
+                    raise commands.ArgumentError("config filename <%s> doesn't exist" % config_filename)
 
                 arguments['config_filename'] = os.path.abspath(os.path.expanduser(config_filename))
             except commands.ArgumentError:
