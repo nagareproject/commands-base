@@ -160,6 +160,8 @@ class Command(commands.Command):
 
             config = configobj.ConfigObj(user_data_file if has_user_data_file else {})
             config.merge(configobj.ConfigObj(config_filename, interpolation=False))
+
+            exec(config.get('services', {}).get('preload_command', ''))
         else:
             config = None
 
@@ -178,7 +180,7 @@ class Command(commands.Command):
         super(Command, self).set_arguments(parser)
 
         if self.WITH_CONFIG_FILENAME:
-            parser.add_argument('config_filename', nargs='?', help='Configuration file')
+            parser.add_argument('config_filename', nargs='?', help='configuration file')
 
     def parse(self, parser, args):
         arguments = super(Command, self).parse(parser, args)

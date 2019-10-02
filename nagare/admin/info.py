@@ -26,7 +26,7 @@ class Info(admin.Command):
 
         parser.add_argument(
             '-l', '--location', action='store_true',
-            help='Display the Python package locations'
+            help='display the Python package locations'
         )
 
     @classmethod
