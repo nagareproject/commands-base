@@ -251,4 +251,4 @@ class NagareCommands(Commands):
 
 def run():
     init()
-    return NagareCommands(entry_points='nagare.commands').execute()
+    return NagareCommands(name='nagare-admin', entry_points='nagare.commands').execute()
