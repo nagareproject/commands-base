@@ -64,30 +64,29 @@ def find_path(choices, name):
 
 
 class Banner(object):
-    def __init__(self, banner=BANNER, padding='  '):
+    def __init__(self, banner=BANNER, padding='  ', file=None):
         self.banner = banner
         self.kakemono = KAKEMONO.strip('\n').replace('|', ' ').splitlines()
         self.kakemono_width = max(map(len, self.kakemono))
         self.padding = padding
         self.first = True
+        self.file = file or sys.stderr
 
-    def display(self, lines='', file=None):
-        file = file or sys.stderr
-
+    def display(self, lines=''):
         if self.first:
             self.first = False
             self.display(self.banner.splitlines())
 
         for line in ([lines] if isinstance(lines, str) else lines):
             kakemono = self.kakemono.pop(0) if self.kakemono else (' ' * self.kakemono_width)
-            file.write(''.join((
+            self.file.write(''.join((
                 Fore.GREEN, Style.BRIGHT,
                 kakemono.ljust(self.kakemono_width),
                 Style.RESET_ALL,
                 self.padding, line,
                 '\n')
             ))
-            file.flush()
+            self.file.flush()
 
     def end(self):
         if not self.first:
@@ -107,7 +106,7 @@ class ArgumentParser(commands.ArgumentParser):
         self.banner = Banner()
 
     def _print_message(self, message, file=None):
-        self.banner.display(message.splitlines(), file)
+        self.banner.display(message.splitlines())
 
     def end(self):
         self.banner.end()

@@ -37,7 +37,7 @@ class Info(admin.Command):
         else:
             implementation = sys.implementation.name.capitalize()
 
-        with admin.Banner() as display:
+        with admin.Banner(file=sys.stdout) as display:
             display((implementation + ' ' + sys.version).splitlines())
             display()
 
