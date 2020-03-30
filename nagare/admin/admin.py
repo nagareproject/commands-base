@@ -159,8 +159,6 @@ class Command(commands.Command):
 
             config = configobj.ConfigObj(user_data_file if has_user_data_file else {})
             config.merge(configobj.ConfigObj(config_filename, interpolation=False))
-
-            exec(config.get('services', {}).get('preload_command', ''))
         else:
             config = None
 
@@ -249,5 +247,13 @@ class NagareCommands(Commands):
 
 
 def run():
+    if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
+        try:
+            config = configobj.ConfigObj(sys.argv[-1])
+        except configobj.ConfigObjError:
+            config = {}
+
+        exec(config.get('services', {}).get('preload_command', ''))
+
     init()
     return NagareCommands(name='nagare-admin', entry_points='nagare.commands').execute()
