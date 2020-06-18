@@ -157,7 +157,7 @@ class Command(commands.Command):
         if self.WITH_CONFIG_FILENAME:
             has_user_data_file, user_data_file = self.get_user_data_file()
 
-            config = configobj.ConfigObj(user_data_file if has_user_data_file else {})
+            config = configobj.ConfigObj(user_data_file if has_user_data_file else {}, interpolation=False)
             config.merge(configobj.ConfigObj(config_filename, interpolation=False))
         else:
             config = None
