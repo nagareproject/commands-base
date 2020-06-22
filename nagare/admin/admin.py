@@ -106,9 +106,9 @@ class Banner(object):
 
 
 class ArgumentParser(commands.ArgumentParser):
-    def __init__(self, *args, **kw):
+    def __init__(self, banner, *args, **kw):
         super(ArgumentParser, self).__init__(*args, **kw)
-        self.banner = Banner()
+        self.banner = banner
 
     def _print_message(self, message, file=None):
         self.banner.display(message.splitlines())
@@ -130,6 +130,14 @@ class Command(commands.Command):
     WITH_CONFIG_FILENAME = True
     WITH_STARTED_SERVICES = False
     SERVICES_FACTORY = Services
+
+    def create_banner(self, names):
+        if names.startswith('nagare-admin'):
+            banner = Banner(NAGARE_BANNER, NAGARE_KAKEMONO, NAGARE_COLOR, True, '  ')
+        else:
+            banner = Banner()
+
+        return banner
 
     @classmethod
     def _create_services(cls, config, config_filename, roots=(), **vars):
@@ -176,7 +184,8 @@ class Command(commands.Command):
         return services((next_method or self.run), **arguments)
 
     def _create_parser(self, name):
-        return ArgumentParser(name, description=self.DESC)
+        banner = self.create_banner(name)
+        return ArgumentParser(banner, name, description=self.DESC)
 
     def set_arguments(self, parser):
         super(Command, self).set_arguments(parser)
@@ -215,8 +224,16 @@ class Commands(commands.Commands):
     def usage_name(self, ljust=0):
         return Style.BRIGHT + super(Commands, self).usage_name(ljust) + Style.RESET_ALL
 
+    def create_banner(self, names):
+        if names.startswith('nagare-admin'):
+            banner = Banner(NAGARE_BANNER, NAGARE_KAKEMONO, NAGARE_COLOR, True, '  ')
+        else:
+            banner = Banner()
+
+        return banner
+
     def _create_parser(self, name):
-        return ArgumentParser(name, description=self.DESC)
+        return ArgumentParser(self.create_banner(name), name, description=self.DESC)
 
     def set_arguments(self, parser):
         parser.add_argument('-a', '--all', action='store_true', help='show all the sub-commands')
@@ -226,13 +243,13 @@ class Commands(commands.Commands):
         if subcommands or not all:
             return super(Commands, self).run(command_names, subcommands)
 
-        with Banner() as display:
+        with Banner(command_names) as display:
             self.display_command(len(command_names) == 1, 0, display)
 
         return 0
 
     def usage(self, names):
-        with Banner() as display:
+        with self.create_banner(' '.join(names)) as display:
             super(Commands, self).usage(names, display)
 
     def display_command(self, top_level, indent, display):
