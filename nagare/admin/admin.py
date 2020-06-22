@@ -21,7 +21,7 @@ from nagare import commands
 from colorama import init, Fore, Style
 from nagare.services.services import Services
 
-KAKEMONO = r"""
+NAGARE_KAKEMONO = r"""
  ,,       ;
   '; ''';'''''''
 ,,     ,' ,,,;,
@@ -41,7 +41,7 @@ KAKEMONO = r"""
     '
 """
 
-BANNER = r"""
+NAGARE_BANNER = r"""
  _   _
 | \ | | __ _  __ _  __ _ _ __ ___
 |  \| |/ _` |/ _` |/ _` | '__/ _ \
@@ -54,6 +54,8 @@ BANNER = r"""
 
 """.lstrip('\n')  # noqa: W605, W291
 
+NAGARE_COLOR = Fore.GREEN
+
 
 def find_path(choices, name):
     choices = filter(None, choices + (os.getcwd(),))
@@ -64,10 +66,12 @@ def find_path(choices, name):
 
 
 class Banner(object):
-    def __init__(self, banner=BANNER, padding='  ', file=None):
+    def __init__(self, banner='', kakemono='', color=None, bright=False, padding='', file=None):
         self.banner = banner
-        self.kakemono = KAKEMONO.strip('\n').replace('|', ' ').splitlines()
-        self.kakemono_width = max(map(len, self.kakemono))
+        self.kakemono = kakemono.strip('\n').replace('|', ' ').splitlines()
+        self.kakemono_width = max(map(len, self.kakemono)) if self.kakemono else 0
+        self.color = color
+        self.bright = bright
         self.padding = padding
         self.first = True
         self.file = file or sys.stderr
@@ -79,12 +83,13 @@ class Banner(object):
 
         for line in ([lines] if isinstance(lines, str) else lines):
             kakemono = self.kakemono.pop(0) if self.kakemono else (' ' * self.kakemono_width)
-            self.file.write(''.join((
-                Fore.GREEN, Style.BRIGHT,
+            self.file.write('{}{}{}{}{}{}\n'.format(
+                self.color if self.color is not None else '',
+                Style.BRIGHT if (self.color is not None) and self.bright else '',
                 kakemono.ljust(self.kakemono_width),
-                Style.RESET_ALL,
-                self.padding, line,
-                '\n')
+                Style.RESET_ALL if self.color is not None else '',
+                self.padding,
+                line
             ))
             self.file.flush()
 
