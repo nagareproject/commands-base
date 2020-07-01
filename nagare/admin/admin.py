@@ -243,7 +243,7 @@ class Commands(commands.Commands):
         if subcommands or not all:
             return super(Commands, self).run(command_names, subcommands)
 
-        with Banner(command_names) as display:
+        with self.create_banner(' '.join(command_names)) as display:
             self.display_command(len(command_names) == 1, 0, display)
 
         return 0
