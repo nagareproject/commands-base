@@ -14,7 +14,7 @@ import sys
 import pkg_resources
 
 from nagare.admin import admin
-from nagare.services import reporters
+from nagare.services import services, reporters
 
 
 class Info(admin.Command):
@@ -46,12 +46,32 @@ class Info(admin.Command):
             display('  ' + user_data_file)
             display('')
 
+            display('Applications:')
+            display('')
+
+            app_reporter = reporters.Reporter((
+                ('Name', lambda entry_point, _: entry_point.name, True),
+                ('Class', lambda _, cls: cls.__module__ + '.' + cls.__name__, True),
+                ('Package', lambda entry_point, _: entry_point.dist.project_name, True),
+                ('Class location', lambda _, cls: sys.modules[cls.__module__].__file__, True),
+                ('Package location', lambda entry_point, _: entry_point.dist.location, True)
+            ))
+
+            activated_columns = {'name', 'class', 'package'}
+            if location:
+                activated_columns.add('class location')
+                activated_columns.add('package location')
+
+            apps = services.Services(entry_points='nagare.applications').load_activated_plugins()
+            app_reporter.report(activated_columns, apps, display=display)
+
             activated_columns = {'package', 'version'}
             if location:
                 activated_columns.add('location')
 
+            display('')
             display('Nagare packages:')
-            display()
+            display('')
             nagare_packages = [
                 (dist,)
                 for dist in pkg_resources.working_set
