@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2020 Net-ng.
+# Copyright (c) 2008-2021 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -30,7 +30,7 @@ setup(
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
     install_requires=[
-        'appdirs', 'colorama==0.3.7',
+        'appdirs', 'colorama',
         'nagare-services', 'nagare-commands'
     ],
     entry_points='''

@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2020 Net-ng.
+# Copyright (c) 2008-2021 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -43,6 +43,7 @@ class Info(admin.Command):
 
             has_user_data_file, user_data_file = cls.get_user_data_file()
             display('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else ''))
+            display('')
             display('  ' + user_data_file)
             display('')
 
