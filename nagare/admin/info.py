@@ -52,7 +52,7 @@ class Info(admin.Command):
         )
 
     @classmethod
-    def run(cls, packages_info, services_info, applications_info, location, registration, services_service):
+    def run(cls, packages_info, services_info, applications_info, location, registrations, services_service):
         if not packages_info and not services_info and not applications_info:
             packages_info = services_info = applications_info = True
 
@@ -80,7 +80,7 @@ class Info(admin.Command):
                 if location:
                     activated_columns.add('location')
 
-                if registration:
+                if registrations:
                     activated_columns.add('services')
 
                 nagare_packages = [
