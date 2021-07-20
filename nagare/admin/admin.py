@@ -16,10 +16,10 @@ from itertools import dropwhile
 
 import appdirs
 
-import configobj
 from nagare import commands
 from colorama import init, Fore, Style
 from nagare.services.services import Services
+from nagare.config import ConfigError, config_from_file
 
 NAGARE_KAKEMONO = r"""
  ,,       ;
@@ -140,22 +140,18 @@ class Command(commands.Command):
         return banner
 
     @classmethod
-    def _create_services(cls, config, config_filename, roots=(), **vars):
+    def _create_services(cls, config, config_filename, roots=(), global_config=None):
         root_path = find_path(roots, '')
-
-        env_vars = {k: v.replace('$', '$$') for k, v in os.environ.items()}
-        env_vars.update(vars)
-
         has_user_config, user_config = cls.get_user_data_file()
 
-        return cls.SERVICES_FACTORY(
-            config, '', 'nagare.services',
+        config['application']['_global_config'] = global_config = dict(
+            global_config or {},
             root=root_path, root_path=root_path,
-            here=os.path.dirname(config_filename) if config_filename else '',
             config_filename=config_filename or '',
-            user_config_filename=user_config if has_user_config else '',
-            **env_vars
+            user_config_filename=user_config if has_user_config else ''
         )
+
+        return cls.SERVICES_FACTORY().load_plugins('services', config, global_config, True)
 
     @staticmethod
     def get_user_data_file():
@@ -170,8 +166,8 @@ class Command(commands.Command):
         if self.WITH_CONFIG_FILENAME:
             has_user_data_file, user_data_file = self.get_user_data_file()
 
-            config = configobj.ConfigObj(user_data_file if has_user_data_file else {}, interpolation=False)
-            config.merge(configobj.ConfigObj(config_filename, interpolation=False))
+            config = config_from_file(user_data_file if has_user_data_file else {})
+            config.merge(config_from_file(config_filename))
         else:
             config = None
 
@@ -182,6 +178,13 @@ class Command(commands.Command):
             services(publisher.create_app)
 
         return services((next_method or self.run), **arguments)
+
+    def execute(self, command_names=(), args=None):
+        try:
+            return super(Command, self).execute(command_names, args)
+        except ConfigError as e:
+            print(e)
+            return -2
 
     def _create_parser(self, name):
         banner = self.create_banner(name)
@@ -271,8 +274,8 @@ class NagareCommands(Commands):
 def run():
     if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
         try:
-            config = configobj.ConfigObj(sys.argv[-1])
-        except configobj.ConfigObjError:
+            config = config_from_file(sys.argv[-1], 1)
+        except ConfigError:
             config = {}
 
         exec(config.get('services', {}).get('preload_command', ''))

@@ -51,6 +51,9 @@ class Info(admin.Command):
             help='display the services registered by the Nagare packages'
         )
 
+    def _create_services(self, *args, **kw):
+        return self.SERVICES_FACTORY()
+
     @classmethod
     def run(cls, packages_info, services_info, applications_info, location, registrations, services_service):
         if not packages_info and not services_info and not applications_info:
@@ -90,15 +93,15 @@ class Info(admin.Command):
                 ]
 
                 services = defaultdict(list)
-                for entry_point in services_service.iter_entry_points():
-                    services[entry_point.dist.project_name].append(entry_point.name)
+                for name, entry_point in services_service.iter_entry_points(None, 'nagare.services', {}):
+                    services[entry_point.dist.project_name].append(name)
 
                 package_reporter = PackagesReporter(
                     PackagesReporter.COLUMNS + (
                         ('Services', lambda dist, *args: ', '.join(sorted(services[dist.project_name])), True),
                     )
                 )
-                package_reporter.report(activated_columns, nagare_packages, display=display)
+                package_reporter.report(activated_columns, nagare_packages, True, display)
 
             if services_info:
                 display('')
@@ -106,23 +109,48 @@ class Info(admin.Command):
                 display('')
 
                 service_reporter = Reporter((
-                    ('Name', lambda entry_point, _: entry_point.name, True),
-                    ('Package', lambda entry_point, _: entry_point.dist.project_name, True),
+                    (
+                        'Name',
+                        lambda level, name, e, c: ' ' * (4 * level) + name,
+                        True
+                    ),
+                    (
+                        'Order',
+                        lambda l, n, e, cls: str(cls.LOAD_PRIORITY),
+                        False
+                    ),
+                    (
+                        'Package',
+                        lambda l, n, entry_point, c: entry_point.dist.project_name,
+                        True
+                    ),
                     (
                         'Location',
-                        lambda entry_point, cls: '{}:{}'.format(sys.modules[cls.__module__].__file__, cls.__name__),
+                        lambda l, n, e, cls: '{}:{}'.format(sys.modules[cls.__module__].__file__, cls.__name__),
                         True
                     )
                 ))
 
-                activated_columns = {'name', 'package'}
+                activated_columns = {'name', 'order', 'package'}
                 if location:
                     activated_columns.add('location')
 
+                def extract_infos(plugins, level=0):
+                    infos = []
+                    for plugin in plugins:
+                        f, (entry, name, cls, plugin, children) = plugin
+                        infos.append((level, name, entry, cls))
+
+                        for plugins in extract_infos(children, level + 1):
+                            infos.append(plugins)
+
+                    return infos
+
                 service_reporter.report(
                     activated_columns,
-                    services_service.load_activated_plugins(),
-                    display=display
+                    extract_infos(services_service.walk1('services', services_service.ENTRY_POINTS, {})),
+                    False,
+                    display
                 )
 
             if applications_info:
@@ -131,11 +159,11 @@ class Info(admin.Command):
                 display('')
 
                 app_reporter = Reporter((
-                    ('Name', lambda entry_point, _: entry_point.name, True),
-                    ('Class', lambda _, cls: cls.__module__ + '.' + cls.__name__, True),
-                    ('Package', lambda entry_point, _: entry_point.dist.project_name, True),
-                    ('Class location', lambda _, cls: sys.modules[cls.__module__].__file__, True),
-                    ('Package location', lambda entry_point, _: entry_point.dist.location, True)
+                    ('Name', lambda name, entry_point, cls: name, True),
+                    ('Class', lambda name, entry_points, cls: cls.__module__ + '.' + cls.__name__, True),
+                    ('Package', lambda name, entry_point, cls: entry_point.dist.project_name, True),
+                    ('Class location', lambda name, entry_point, cls: sys.modules[cls.__module__].__file__, True),
+                    ('Package location', lambda name, entry_point, cls: entry_point.dist.location, True)
                 ))
 
                 activated_columns = {'name', 'class', 'package'}
@@ -143,7 +171,10 @@ class Info(admin.Command):
                     activated_columns.add('class location')
                     activated_columns.add('package location')
 
-                apps = Services(entry_points='nagare.applications').load_activated_plugins()
-                app_reporter.report(activated_columns, apps, display=display)
+                applications = Services()
+                entry_points = applications.iter_entry_points(None, 'nagare.applications', {})
+                applications = applications.load_entry_points(entry_points, {})
+
+                app_reporter.report(activated_columns, applications, True, display)
 
             return 0
