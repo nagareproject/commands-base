@@ -140,16 +140,19 @@ class Command(commands.Command):
         return banner
 
     @classmethod
-    def _create_services(cls, config, config_filename, roots=(), global_config=None):
+    def _create_services(cls, config, config_filename, roots=(), global_config=None, create_application=False):
         root_path = find_path(roots, '')
         has_user_config, user_config = cls.get_user_data_file()
 
-        config['application']['_global_config'] = global_config = dict(
+        global_config = dict(
             global_config or {},
             root=root_path, root_path=root_path,
             config_filename=config_filename or '',
             user_config_filename=user_config if has_user_config else ''
         )
+
+        if not create_application:
+            config['application']['_global_config'] = global_config
 
         return cls.SERVICES_FACTORY().load_plugins('services', config, global_config, True)
 
