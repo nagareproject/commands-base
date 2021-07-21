@@ -152,7 +152,9 @@ class Command(commands.Command):
         )
 
         if not create_application:
-            config['application']['_global_config'] = global_config
+            initial_config = config['application'].dict()
+            initial_config['_global_config'] = global_config
+            config['application']['_initial_config'] = initial_config
 
         return cls.SERVICES_FACTORY().load_plugins('services', config, global_config, True)
 
