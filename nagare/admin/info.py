@@ -148,7 +148,7 @@ class Info(admin.Command):
 
                 service_reporter.report(
                     activated_columns,
-                    extract_infos(services_service.walk1('services', services_service.ENTRY_POINTS, {})),
+                    extract_infos(services_service.walk1('services', 'nagare.services', {})),
                     False,
                     display
                 )
