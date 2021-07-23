@@ -19,7 +19,7 @@ import appdirs
 from nagare import commands
 from colorama import init, Fore, Style
 from nagare.services.services import Services
-from nagare.config import ConfigError, config_from_file
+from nagare.config import ConfigError, config_from_dict, config_from_file
 
 NAGARE_KAKEMONO = r"""
  ,,       ;
@@ -171,7 +171,7 @@ class Command(commands.Command):
         if self.WITH_CONFIG_FILENAME:
             has_user_data_file, user_data_file = self.get_user_data_file()
 
-            config = config_from_file(user_data_file if has_user_data_file else {})
+            config = config_from_file(user_data_file) if has_user_data_file else config_from_dict({})
             config.merge(config_from_file(config_filename))
         else:
             config = None
