@@ -146,12 +146,14 @@ class Info(admin.Command):
 
                     return infos
 
-                service_reporter.report(
-                    activated_columns,
-                    extract_infos(services_service.walk1('services', 'nagare.services', {})),
-                    False,
-                    display
+                services = services_service.walk1(
+                    'services',
+                    'nagare.services',
+                    {},
+                    services_service.activated_by_default
                 )
+
+                service_reporter.report(activated_columns, extract_infos(services), False, display)
 
             if applications_info:
                 display('')
