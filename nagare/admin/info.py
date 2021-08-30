@@ -150,6 +150,7 @@ class Info(admin.Command):
                     'services',
                     'nagare.services',
                     {},
+                    {},
                     services_service.activated_by_default
                 )
 
