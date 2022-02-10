@@ -280,7 +280,7 @@ def run():
     if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
         try:
             config = config_from_file(sys.argv[-1], 1)
-        except ConfigError:
+        except (UnicodeDecodeError, ConfigError):
             config = {}
 
         exec(config.get('services', {}).get('preload_command', ''))
