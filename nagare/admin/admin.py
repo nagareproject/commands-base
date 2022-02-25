@@ -132,7 +132,7 @@ class Command(commands.Command):
     SERVICES_FACTORY = Services
 
     def create_banner(self, names):
-        if names.startswith('nagare-admin'):
+        if names.startswith(('nagare', 'nagare-admin')):
             banner = Banner(NAGARE_BANNER, NAGARE_KAKEMONO, NAGARE_COLOR, True, '  ')
         else:
             banner = Banner()
@@ -233,7 +233,7 @@ class Commands(commands.Commands):
         return Style.BRIGHT + super(Commands, self).usage_name(ljust) + Style.RESET_ALL
 
     def create_banner(self, names):
-        if names.startswith('nagare-admin'):
+        if names.startswith(('nagare', 'nagare-admin')):
             banner = Banner(NAGARE_BANNER, NAGARE_KAKEMONO, NAGARE_COLOR, True, '  ')
         else:
             banner = Banner()
@@ -286,4 +286,9 @@ def run():
         exec(config.get('services', {}).get('preload_command', ''))
 
     init()
-    return NagareCommands(name='nagare-admin', entry_points='nagare.commands').execute()
+
+    command_name = os.path.basename(sys.argv[0])
+    if command_name == '__main__.py':
+        command_name = 'nagare'
+
+    return NagareCommands(name=command_name, entry_points='nagare.commands').execute()
