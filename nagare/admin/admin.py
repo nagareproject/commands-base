@@ -165,14 +165,19 @@ class Command(commands.Command):
 
         user_data_file = os.environ.get('NAGARE_USER_CONFIG', user_data_file)
 
-        return os.path.isfile(user_data_file), user_data_file
+        return os.path.isfile(user_data_file), os.path.abspath(user_data_file)
 
     def _run(self, command_names, next_method=None, config_filename=None, **arguments):
         if self.WITH_CONFIG_FILENAME:
             has_user_data_file, user_data_file = self.get_user_data_file()
 
-            config = config_from_file(user_data_file) if has_user_data_file else config_from_dict({})
-            config.merge(config_from_file(config_filename))
+            if has_user_data_file:
+                config = config_from_file(user_data_file, {'here': os.path.dirname(user_data_file)})
+            else:
+                config = config_from_dict({})
+
+            config_filename = os.path.abspath(config_filename)
+            config.merge(config_from_file(config_filename, {'here': os.path.dirname(config_filename)}))
         else:
             config = None
 
@@ -278,8 +283,10 @@ class NagareCommands(Commands):
 
 def run():
     if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
+        config_filename = os.path.abspath(sys.argv[-1])
+        here = os.path.dirname(config_filename)
         try:
-            config = config_from_file(sys.argv[-1], 1)
+            config = config_from_file(config_filename, {'here': here}, 1)
         except (UnicodeDecodeError, ConfigError):
             config = {}
 
