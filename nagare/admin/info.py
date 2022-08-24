@@ -27,6 +27,11 @@ class Info(admin.Command):
         super(Info, self).set_arguments(parser)
 
         parser.add_argument(
+            '-g', '--general', action='store_true', dest='general_info',
+            help='display general informations'
+        )
+
+        parser.add_argument(
             '-p', '--packages', action='store_true', dest='packages_info',
             help='display packages informations'
         )
@@ -55,9 +60,10 @@ class Info(admin.Command):
         return self.SERVICES_FACTORY()
 
     @classmethod
-    def run(cls, packages_info, services_info, applications_info, location, registrations, services_service):
-        if not packages_info and not services_info and not applications_info:
-            packages_info = services_info = applications_info = True
+    def run(cls, general_info, packages_info, services_info, applications_info, location, registrations, services_service):
+        nb_sections = general_info + packages_info + services_info + applications_info
+        if nb_sections == 0:
+            general_info = packages_info = services_info = applications_info = True
 
         implementation = getattr(sys, 'subversion', None)
         if implementation:
@@ -66,18 +72,20 @@ class Info(admin.Command):
             implementation = sys.implementation.name.capitalize()
 
         with admin.Banner(file=sys.stdout) as display:
-            display((implementation + ' ' + sys.version).splitlines())
-            display()
+            if general_info:
+                display((implementation + ' ' + sys.version).splitlines())
+                display()
 
-            has_user_data_file, user_data_file = cls.get_user_data_file()
-            display('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else ''))
-            display('')
-            display('  ' + user_data_file)
+                has_user_data_file, user_data_file = cls.get_user_data_file()
+                display('User configuration [%sFOUND]: ' % ('NOT ' if not has_user_data_file else ''))
+                display('')
+                display('  ' + user_data_file)
+                display('')
 
             if packages_info:
-                display('')
-                display('Nagare packages:')
-                display('')
+                if nb_sections != 1:
+                    display('Nagare packages:')
+                    display('')
 
                 activated_columns = {'package', 'version'}
                 if location:
@@ -101,12 +109,19 @@ class Info(admin.Command):
                         ('Services', lambda dist, *args: ', '.join(sorted(services[dist.project_name])), True),
                     )
                 )
-                package_reporter.report(activated_columns, nagare_packages, True, display)
+                package_reporter.report(
+                    activated_columns,
+                    nagare_packages,
+                    True,
+                    display,
+                    0 if nb_sections == 1 else 2
+                )
+                display('')
 
             if services_info:
-                display('')
-                display('Services:')
-                display('')
+                if nb_sections != 1:
+                    display('Services:')
+                    display('')
 
                 service_reporter = Reporter((
                     (
@@ -154,22 +169,36 @@ class Info(admin.Command):
                     services_service.activated_by_default
                 )
 
-                service_reporter.report(activated_columns, extract_infos(services), False, display)
+                service_reporter.report(
+                    activated_columns,
+                    extract_infos(services),
+                    False,
+                    display,
+                    0 if nb_sections == 1 else 2
+                )
+                display('')
 
             if applications_info:
-                display('')
-                display('Applications:')
-                display('')
+                if nb_sections != 1:
+                    display('Applications:')
+                    display('')
 
                 app_reporter = Reporter((
                     ('Name', lambda name, entry_point, cls: name, True),
                     ('Class', lambda name, entry_points, cls: cls.__module__ + '.' + cls.__name__, True),
                     ('Package', lambda name, entry_point, cls: entry_point.dist.project_name, True),
+                    ('Version', lambda name, entry_point, cls: entry_point.dist.version, True),
                     ('Class location', lambda name, entry_point, cls: sys.modules[cls.__module__].__file__, True),
-                    ('Package location', lambda name, entry_point, cls: entry_point.dist.location, True)
+                    (
+                        'Package location',
+                        lambda name, entry_point, cls: (
+                            entry_point.dist.location
+                        ),
+                        True
+                    )
                 ))
 
-                activated_columns = {'name', 'class', 'package'}
+                activated_columns = {'name', 'class', 'package', 'version'}
                 if location:
                     activated_columns.add('class location')
                     activated_columns.add('package location')
@@ -178,6 +207,12 @@ class Info(admin.Command):
                 entry_points = applications.iter_entry_points(None, 'nagare.applications', {})
                 applications = applications.load_entry_points(entry_points, {})
 
-                app_reporter.report(activated_columns, applications, True, display)
+                app_reporter.report(
+                    activated_columns,
+                    applications,
+                    True,
+                    display,
+                    0 if nb_sections == 1 else 2
+                )
 
             return 0
