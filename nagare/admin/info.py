@@ -10,22 +10,14 @@
 # --
 
 import sys
-import warnings
 from collections import defaultdict
 
 import pkg_resources
 
 from nagare.admin import admin
+from nagare.packaging import Distribution
 from nagare.services.services import Services
 from nagare.services.reporters import Reporter, PackagesReporter
-
-warnings.filterwarnings('ignore', module='_distutils')
-try:
-    from pip._internal.metadata.pkg_resources import Distribution  # noqa: E402
-except ImportError:
-    def Distribution(dist):
-        dist.editable_project_location = None
-        return dist
 
 
 class Info(admin.Command):
