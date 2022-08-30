@@ -16,6 +16,7 @@ from itertools import dropwhile
 
 import appdirs
 
+from nagare import log
 from nagare import commands
 from colorama import init, Fore, Style
 from nagare.services.services import Services
@@ -298,4 +299,7 @@ def run():
     if command_name == '__main__.py':
         command_name = 'nagare'
 
-    return NagareCommands(name=command_name, entry_points='nagare.commands').execute()
+    try:
+        return NagareCommands(name=command_name, entry_points='nagare.commands').execute()
+    except Exception:
+        log.get_logger('nagare.services.exceptions').error('Unhandled exception', exc_info=True)
