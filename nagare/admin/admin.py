@@ -303,3 +303,4 @@ def run():
         return NagareCommands(name=command_name, entry_points='nagare.commands').execute()
     except Exception:
         log.get_logger('nagare.services.exceptions').error('Unhandled exception', exc_info=True)
+        return -1
