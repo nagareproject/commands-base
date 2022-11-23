@@ -230,8 +230,15 @@ class Command(commands.Command):
 
         return arguments
 
-    def display_command(self, top_level, indent, display):
-        display('{}- {}: {}'.format(' ' * (indent * 4), self.name, self.DESC))
+    def display_command(self, top_level, level_to_display, level):
+        if not level_to_display or (level + 1 == level_to_display):
+            indent = 0 if level_to_display else (level * 4)
+            print('{}{}'.format(' ' * indent, self.name))
+
+    def display_command_verbose(self, top_level, level_to_display, level, display):
+        if not level_to_display or (level + 1 == level_to_display):
+            indent = 0 if level_to_display else (level * 4)
+            display('{}- {}: {}'.format(' ' * indent, self.name, self.DESC))
 
 
 class Commands(commands.Commands):
@@ -250,15 +257,36 @@ class Commands(commands.Commands):
         return ArgumentParser(self.create_banner(name), name, description=self.DESC)
 
     def set_arguments(self, parser):
-        parser.add_argument('-a', '--all', action='store_true', help='show all the sub-commands')
+        parser.add_argument(
+            '-a', '--all',
+            action='store_true', dest='all_commands',
+            help='show all the sub-commands with descriptions'
+        )
+        parser.add_argument(
+            '-q', '--quiet',
+            action='store_true',
+            help='show all the sub-commands'
+        )
+        parser.add_argument(
+            '-l', '--level',
+            type=int, dest='level_to_display', default=0,
+            help='show all the sub-commands of this level'
+        )
+
         super(Commands, self).set_arguments(parser)
 
-    def run(self, command_names, all, subcommands):
-        if subcommands or not all:
+    def run(self, command_names, all_commands, quiet, level_to_display, subcommands):
+        if quiet or level_to_display:
+            all_commands = True
+
+        if subcommands or not all_commands:
             return super(Commands, self).run(command_names, subcommands)
 
-        with self.create_banner(' '.join(command_names)) as display:
-            self.display_command(len(command_names) == 1, 0, display)
+        if quiet:
+            self.display_command(len(command_names) == 1, level_to_display, 0)
+        else:
+            with self.create_banner(' '.join(command_names)) as display:
+                self.display_command_verbose(len(command_names) == 1, level_to_display, 0, display)
 
         return 0
 
@@ -266,14 +294,25 @@ class Commands(commands.Commands):
         with self.create_banner(' '.join(names)) as display:
             super(Commands, self).usage(names, display)
 
-    def display_command(self, top_level, indent, display):
-        display('{}* {} ({})'.format(' ' * (indent * 4), self.name, self.DESC))
-        display()
+    def display_command_verbose(self, top_level, level_to_display, level, display):
+        if not level_to_display or (level + 1 == level_to_display):
+            indent = 0 if level_to_display else (level * 4)
+            display('{}* {} ({})'.format(' ' * indent, self.name, self.DESC))
+            if not level_to_display:
+                display()
 
         for _, sub_command in sorted(self.items()):
-            sub_command.display_command(False, indent + 1, display)
-            if top_level:
+            sub_command.display_command_verbose(False, level_to_display, level + 1, display)
+            if not level_to_display and top_level:
                 display()
+
+    def display_command(self, top_level, level_to_display, level):
+        if not level_to_display or (level + 1 == level_to_display):
+            indent = 0 if level_to_display else (level * 4)
+            print('{}{}'.format(' ' * indent, self.name))
+
+        for _, sub_command in sorted(self.items()):
+            sub_command.display_command(False, level_to_display, level + 1)
 
 
 class NagareCommands(Commands):
