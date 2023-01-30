@@ -1,0 +1,6 @@
+[console_scripts]
+nagare-admin = nagare.admin.admin:run
+nagare = nagare.admin.admin:run
+
+[nagare.commands]
+info = nagare.admin.info:Info

@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -7,20 +7,17 @@
 # this distribution.
 # --
 
-"""The ``nagare-admin`` executable
-"""
+"""The ``nagare-admin`` executable."""
 
+from itertools import dropwhile
 import os
 import sys
-from itertools import dropwhile
 
 import appdirs
-
-from nagare import log
-from nagare import commands
-from colorama import init, Fore, Style
-from nagare.services.services import Services
+from colorama import Fore, Style, init
+from nagare import commands, log
 from nagare.config import ConfigError, config_from_dict, config_from_file
+from nagare.services.services import Services
 
 NAGARE_KAKEMONO = r"""
  ,,       ;
@@ -42,7 +39,7 @@ NAGARE_KAKEMONO = r"""
     '
 """
 
-NAGARE_BANNER = r"""
+NAGARE_BANNER = r'''
  _   _
 | \ | | __ _  __ _  __ _ _ __ ___
 |  \| |/ _` |/ _` |/ _` | '__/ _ \
@@ -53,7 +50,9 @@ NAGARE_BANNER = r"""
               http://www.nagare.org
 
 
-""".lstrip('\n')  # noqa: W605, W291
+'''.lstrip(
+    '\n'
+)  # noqa: W605, W291
 
 NAGARE_COLOR = Fore.GREEN
 
@@ -82,16 +81,18 @@ class Banner(object):
             self.first = False
             self.display(self.banner.splitlines())
 
-        for line in ([lines] if isinstance(lines, str) else lines):
+        for line in [lines] if isinstance(lines, str) else lines:
             kakemono = self.kakemono.pop(0) if self.kakemono else (' ' * self.kakemono_width)
-            self.file.write('{}{}{}{}{}{}\n'.format(
-                self.color if self.color is not None else '',
-                Style.BRIGHT if (self.color is not None) and self.bright else '',
-                kakemono.ljust(self.kakemono_width),
-                Style.RESET_ALL if self.color is not None else '',
-                self.padding,
-                line
-            ))
+            self.file.write(
+                '{}{}{}{}{}{}\n'.format(
+                    self.color if self.color is not None else '',
+                    Style.BRIGHT if (self.color is not None) and self.bright else '',
+                    kakemono.ljust(self.kakemono_width),
+                    Style.RESET_ALL if self.color is not None else '',
+                    self.padding,
+                    line,
+                )
+            )
             self.file.flush()
 
     def end(self):
@@ -127,7 +128,8 @@ class ArgumentParser(commands.ArgumentParser):
 
 
 class Command(commands.Command):
-    """The base class of all the commands"""
+    """The base class of all the commands."""
+
     WITH_CONFIG_FILENAME = True
     WITH_STARTED_SERVICES = False
     SERVICES_FACTORY = Services
@@ -147,9 +149,10 @@ class Command(commands.Command):
 
         global_config = dict(
             global_config or {},
-            root=root_path, root_path=root_path,
+            root=root_path,
+            root_path=root_path,
             config_filename=config_filename or '',
-            user_config_filename=user_config if has_user_config else ''
+            user_config_filename=user_config if has_user_config else '',
         )
 
         if not create_application:
@@ -217,7 +220,7 @@ class Command(commands.Command):
                     config_filename = os.environ.get('NAGARE_CONFIG')
 
                 if config_filename is None:
-                    raise commands.ArgumentError("config filename missing")
+                    raise commands.ArgumentError('config filename missing')
 
                 if not os.path.exists(config_filename):
                     raise commands.ArgumentError("config filename <%s> doesn't exist" % config_filename)
@@ -258,19 +261,16 @@ class Commands(commands.Commands):
 
     def set_arguments(self, parser):
         parser.add_argument(
-            '-a', '--all',
-            action='store_true', dest='all_commands',
-            help='show all the sub-commands with descriptions'
+            '-a', '--all', action='store_true', dest='all_commands', help='show all the sub-commands with descriptions'
         )
+        parser.add_argument('-q', '--quiet', action='store_true', help='show all the sub-commands')
         parser.add_argument(
-            '-q', '--quiet',
-            action='store_true',
-            help='show all the sub-commands'
-        )
-        parser.add_argument(
-            '-l', '--level',
-            type=int, dest='level_to_display', default=0,
-            help='show all the sub-commands of this level'
+            '-l',
+            '--level',
+            type=int,
+            dest='level_to_display',
+            default=0,
+            help='show all the sub-commands of this level',
         )
 
         super(Commands, self).set_arguments(parser)
@@ -318,6 +318,7 @@ class Commands(commands.Commands):
 class NagareCommands(Commands):
     DESC = 'Nagare commands'
 
+
 # ---------------------------------------------------------------------------
 
 
@@ -330,7 +331,7 @@ def run():
         except (UnicodeDecodeError, ConfigError):
             config = {}
 
-        exec(config.get('services', {}).get('preload_command', ''))
+        exec(config.get('services', {}).get('preload_command', ''))  # noqa: S102
 
     init()
 
