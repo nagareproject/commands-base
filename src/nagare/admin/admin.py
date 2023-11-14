@@ -14,8 +14,8 @@ import os
 import sys
 
 import appdirs
-from colorama import Fore, Style, init
-from nagare import commands, log
+from colorama import Fore, Style
+from nagare import commands
 from nagare.config import ConfigError, config_from_dict, config_from_file
 from nagare.services.services import Services
 
@@ -39,7 +39,7 @@ NAGARE_KAKEMONO = r"""
     '
 """
 
-NAGARE_BANNER = r'''
+NAGARE_BANNER = r"""
  _   _
 | \ | | __ _  __ _  __ _ _ __ ___
 |  \| |/ _` |/ _` |/ _` | '__/ _ \
@@ -50,9 +50,7 @@ NAGARE_BANNER = r'''
               http://www.nagare.org
 
 
-'''.lstrip(
-    '\n'
-)  # noqa: W605, W291
+""".lstrip('\n')  # noqa: W605, W291
 
 NAGARE_COLOR = Fore.GREEN
 
@@ -317,30 +315,3 @@ class Commands(commands.Commands):
 
 class NagareCommands(Commands):
     DESC = 'Nagare commands'
-
-
-# ---------------------------------------------------------------------------
-
-
-def run():
-    if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
-        config_filename = os.path.abspath(sys.argv[-1])
-        here = os.path.dirname(config_filename)
-        try:
-            config = config_from_file(config_filename, {'here': here}, 1)
-        except (UnicodeDecodeError, ConfigError):
-            config = {}
-
-        exec(config.get('services', {}).get('preload_command', ''))  # noqa: S102
-
-    init()
-
-    command_name = os.path.basename(sys.argv[0])
-    if command_name == '__main__.py':
-        command_name = 'nagare'
-
-    try:
-        return NagareCommands(name=command_name, entry_points='nagare.commands').execute()
-    except Exception:
-        log.get_logger('nagare.services.exceptions').error('Unhandled exception', exc_info=True)
-        return -1

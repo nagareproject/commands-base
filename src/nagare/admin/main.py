@@ -6,9 +6,17 @@
 # the file LICENSE.txt, which you should have received as part of
 # this distribution.
 # --
+# PYTHON_ARGCOMPLETE_OK
 
-import sys
+import os
 
-from . import main
+from . import complete
 
-sys.exit(main.run())
+
+def run():
+    if '_ARGCOMPLETE' in os.environ:
+        complete.complete()
+
+    from nagare.admin import run
+
+    return run.run()

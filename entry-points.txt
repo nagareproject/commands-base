@@ -1,6 +1,7 @@
 [console_scripts]
-nagare-admin = nagare.admin.admin:run
-nagare = nagare.admin.admin:run
+nagare-admin = nagare.admin.main:run
+nagare = nagare.admin.main:run
 
 [nagare.commands]
 info = nagare.admin.info:Info
+completion = nagare.admin.completion:Completion
