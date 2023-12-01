@@ -6,6 +6,7 @@
 # the file LICENSE.txt, which you should have received as part of
 # this distribution.
 # --
+
 from argparse import ArgumentParser
 from collections import defaultdict
 from importlib import metadata
@@ -56,7 +57,12 @@ class CompletionFinder(argcomplete.CompletionFinder):
 
 def complete():
     all_commands = defaultdict(dict)
-    for entry in itertools.chain(*metadata.entry_points().values()):
+
+    entry_points = metadata.entry_points()
+    if hasattr(entry_points, 'values'):
+        entry_points = itertools.chain(*entry_points.values())
+
+    for entry in entry_points:
         if not entry.group.startswith('nagare.commands'):
             continue
 
