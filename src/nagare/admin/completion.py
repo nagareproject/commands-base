@@ -14,7 +14,7 @@ from nagare.admin import admin
 
 
 class Completion(admin.Command):
-    DESC = 'generate Nagare CLI completions for Bash, Zsh, Fish or PowerShell: `eval "$(nagare completion --<shell>)"`'
+    DESC = 'CLI auto-completion: `eval "$(nagare completion --<shell>)"`'
     WITH_CONFIG_FILENAME = False
 
     def set_arguments(self, parser):

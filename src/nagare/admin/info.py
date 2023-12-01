@@ -10,13 +10,13 @@
 # --
 
 from collections import defaultdict
+from importlib import metadata
 import sys
 
 from nagare.admin import admin
 from nagare.packaging import Distribution
 from nagare.services.reporters import PackagesReporter, Reporter
 from nagare.services.services import Services
-import pkg_resources
 
 
 class Info(admin.Command):
@@ -89,19 +89,19 @@ class Info(admin.Command):
                 if registrations:
                     activated_columns.add('services')
 
-                nagare_packages = [
-                    (dist,)
-                    for dist in pkg_resources.working_set
-                    if dist.project_name.startswith('nagare-') or (dist.project_name == 'nagare')
-                ]
+                nagare_packages = {
+                    dist.metadata['name']: (dist,)
+                    for dist in metadata.distributions()
+                    if dist.metadata['name'].startswith('nagare-') or (dist.metadata['name'] == 'nagare')
+                }.values()
 
                 services = defaultdict(list)
-                for name, entry_point in services_service.iter_entry_points(None, 'nagare.services', {}):
-                    services[entry_point.dist.project_name].append(name)
+                for dist, name, entry_point in services_service.iter_entry_points(None, 'nagare.services', {}):
+                    services[entry_point.dist.metadata['name']].append(name)
 
                 package_reporter = PackagesReporter(
                     PackagesReporter.COLUMNS
-                    + (('Services', lambda dist, *args: ', '.join(sorted(services[dist.project_name])), True),)
+                    + (('Services', lambda dist, *args: ', '.join(sorted(services[dist.metadata['name']])), True),)
                 )
                 package_reporter.report(activated_columns, nagare_packages, True, display, 0 if nb_sections == 1 else 2)
                 display('')
@@ -115,7 +115,7 @@ class Info(admin.Command):
                     (
                         ('Name', lambda level, name, e, c: ' ' * (4 * level) + name, True),
                         ('Order', lambda l, n, e, cls: str(cls.LOAD_PRIORITY), False),
-                        ('Package', lambda l, n, entry_point, c: entry_point.dist.project_name, True),
+                        ('Package', lambda l, n, entry_point, c: entry_point.dist.metadata['name'], True),
                         (
                             'Location',
                             lambda l, n, e, cls: '{}:{}'.format(sys.modules[cls.__module__].__file__, cls.__name__),
@@ -155,15 +155,19 @@ class Info(admin.Command):
 
                 app_reporter = Reporter(
                     (
-                        ('Name', lambda name, entry_point, cls: name, True),
-                        ('Class', lambda name, entry_points, cls: cls.__module__ + '.' + cls.__name__, True),
-                        ('Package', lambda name, entry_point, cls: entry_point.dist.project_name, True),
-                        ('Version', lambda name, entry_point, cls: entry_point.dist.version, True),
-                        ('Class location', lambda name, entry_point, cls: sys.modules[cls.__module__].__file__, True),
+                        ('Name', lambda dist, name, entry_point, cls: name, True),
+                        ('Class', lambda dist, name, entry_points, cls: cls.__module__ + '.' + cls.__name__, True),
+                        ('Package', lambda dist, name, entry_point, cls: dist.metadata['name'], True),
+                        ('Version', lambda dist, name, entry_point, cls: dist.version, True),
+                        (
+                            'Class location',
+                            lambda dist, name, entry_point, cls: sys.modules[cls.__module__].__file__,
+                            True,
+                        ),
                         (
                             'Package location',
-                            lambda name, entry_point, cls: (
-                                Distribution(entry_point.dist).editable_project_location or entry_point.dist.location
+                            lambda dist, name, entry_point, cls: (
+                                Distribution(dist).editable_project_location or str(dist.locate_file(''))
                             ),
                             True,
                         ),
