@@ -12,8 +12,8 @@
 import os
 import sys
 
-from colorama import init
 from nagare import log
+from colorama import init
 from nagare.config import ConfigError, config_from_file
 
 from . import admin

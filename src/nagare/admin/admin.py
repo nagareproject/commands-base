@@ -9,13 +9,13 @@
 
 """The ``nagare-admin`` executable."""
 
-from itertools import dropwhile
 import os
 import sys
+from itertools import dropwhile
 
 import appdirs
-from colorama import Fore, Style
 from nagare import commands
+from colorama import Fore, Style
 from nagare.config import ConfigError, config_from_dict, config_from_file
 from nagare.services.services import Services
 

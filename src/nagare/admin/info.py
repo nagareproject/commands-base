@@ -9,14 +9,14 @@
 # this distribution.
 # --
 
-from collections import defaultdict
-from importlib import metadata
 import sys
+from importlib import metadata
+from collections import defaultdict
 
 from nagare.admin import admin
 from nagare.packaging import Distribution
-from nagare.services.reporters import PackagesReporter, Reporter
 from nagare.services.services import Services
+from nagare.services.reporters import Reporter, PackagesReporter
 
 
 class Info(admin.Command):
@@ -31,11 +31,11 @@ class Info(admin.Command):
         )
 
         parser.add_argument(
-            '-p', '--packages', action='store_true', dest='packages_info', help='display packages informations'
+            '-p', '--packages', action='store_true', dest='packages_info', help='display Nagare packages'
         )
 
         parser.add_argument(
-            '-s', '--services', action='store_true', dest='services_info', help='display services informations'
+            '-s', '--services', action='store_true', dest='services_info', help='display Nagare services'
         )
 
         parser.add_argument(
@@ -43,13 +43,13 @@ class Info(admin.Command):
             '--applications',
             action='store_true',
             dest='applications_info',
-            help='display applications informations',
+            help='display Nagare applications',
         )
 
-        parser.add_argument('-l', '--location', action='store_true', help='display Nagare package locations')
+        parser.add_argument('-l', '--location', action='store_true', help='display packages location')
 
         parser.add_argument(
-            '-r', '--registrations', action='store_true', help='display the services registered by the Nagare packages'
+            '-r', '--registrations', action='store_true', help='display the packages services are registered by'
         )
 
     def _create_services(self, *args, **kw):

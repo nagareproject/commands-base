@@ -7,18 +7,18 @@
 # this distribution.
 # --
 
-from argparse import ArgumentParser
-from collections import defaultdict
-from importlib import metadata
-import itertools
 import os
+import itertools
+from argparse import ArgumentParser
+from importlib import metadata
+from collections import defaultdict
 
 import argcomplete
 
 
 def FilesCompleter():
     return (
-        lambda **kw: ['files:file:_files']
+        lambda **kw: ['files#file#_files']
         if os.environ['_ARGCOMPLETE_SHELL'] == 'zsh'
         else argcomplete.FilesCompleter()
     )
@@ -45,12 +45,20 @@ class CompletionFinder(argcomplete.CompletionFinder):
     def _get_completions(self, *args):
         completions = super(CompletionFinder, self)._get_completions(*args)
 
-        if (os.environ.pop('_ARGCOMPLETE_SHELL') == 'zsh') and ((len(completions) != 1) or (':' not in completions[0])):
-            completions = [
-                c + (f':"{self._display_completions[c]}"' if c in self._display_completions else '')
-                for c in completions
-            ]
-            completions = ['args:arguments:(({}))'.format('\013'.join(completions))]
+        is_zsh = os.environ.pop('_ARGCOMPLETE_SHELL', '') == 'zsh'
+        if (len(completions) != 1) or ('#' not in completions[0]):
+            if is_zsh:
+                completions = [
+                    c + (f':"{self._display_completions[c]}"' if c in self._display_completions else '')
+                    for c in completions
+                ]
+                completions = ['args:arguments:(({}))'.format('\013'.join(completions))]
+        else:
+            if is_zsh:
+                completions = completions[0].split('#')
+                completions = [':'.join(completions[:3])] + completions[3:]
+            else:
+                completions = []
 
         return completions
 
@@ -87,7 +95,7 @@ def complete():
         always_complete_options=False,
         exclude=['-h', '--help'],
         default_completer=FilesCompleter(),
-        validator=lambda completion, prefix: (':' in completion) or (completion.startswith(prefix)),
+        validator=lambda completion, prefix: ('#' in completion) or (completion.startswith(prefix)),
     )
 
     return 0
