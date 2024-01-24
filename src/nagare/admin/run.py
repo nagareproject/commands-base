@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -12,8 +12,9 @@
 import os
 import sys
 
-from nagare import log
 from colorama import init
+
+from nagare import log
 from nagare.config import ConfigError, config_from_file
 
 from . import admin
