@@ -9,6 +9,6 @@
 
 import sys
 
-from . import main
+from nagare.admin import main
 
 sys.exit(main.run())

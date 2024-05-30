@@ -11,6 +11,6 @@
 
 tests:
   script:
-    - pip3 install ruff .
-    - ruff src
+    - pip3 install ruff
+    - ruff check src
     - ruff format --check src
