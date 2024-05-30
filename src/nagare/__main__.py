@@ -11,4 +11,5 @@ import sys
 
 from nagare.admin import main
 
+sys.path.pop(0)
 sys.exit(main.run())
