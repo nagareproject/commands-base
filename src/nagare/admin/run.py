@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2008-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -39,7 +39,9 @@ def run():
 
     try:
         commands = admin.NagareCommands(name=command_name, entry_points='nagare.commands')
-        return commands.execute()
+        return commands.execute(
+            args=(command_name.split('-')[2:] if command_name.startswith('nagare-commands') else []) + sys.argv[1:]
+        )
     except Exception:
         log.get_logger('nagare.services.exceptions').error('Unhandled exception', exc_info=True)
         return -1

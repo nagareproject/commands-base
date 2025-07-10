@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2008-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -47,8 +47,8 @@ NAGARE_BANNER = r"""
 | |\  | (_| | (_| | (_| | | |  __/
 |_| \_|\__,_|\__, |\__,_|_|  \___|
              |___/
-                     http://naga.re
-              http://www.nagare.org
+                    https://naga.re
+             https://www.nagare.org
 
 
 """.lstrip('\n')  # noqa: W605, W291
