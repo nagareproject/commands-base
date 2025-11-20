@@ -9,14 +9,15 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
+import sys
 
 from . import complete
 
 
-def run():
+def run(*args):
     if '_ARGCOMPLETE' in os.environ:
         complete.complete()
 
     from nagare.admin import run
 
-    return run.run()
+    return run.run(*(args or sys.argv))

@@ -10,7 +10,6 @@
 """The ``nagare-admin`` executable."""
 
 import os
-import sys
 
 from colorama import init
 
@@ -20,9 +19,9 @@ from nagare.config import ConfigError, config_from_file
 from . import admin
 
 
-def run():
-    if (len(sys.argv) > 1) and os.path.isfile(sys.argv[-1]):
-        config_filename = os.path.abspath(sys.argv[-1])
+def run(*args):
+    if (len(args) > 1) and os.path.isfile(args[-1]):
+        config_filename = os.path.abspath(args[-1])
         here = os.path.dirname(config_filename)
         try:
             config = config_from_file(config_filename, {'here': here}, 1)
@@ -33,15 +32,13 @@ def run():
 
     init()
 
-    command_name = os.path.basename(sys.argv[0])
+    command_name = os.path.basename(args[0])
     if command_name == '__main__.py':
         command_name = 'nagare'
 
     try:
         commands = admin.NagareCommands(name=command_name, entry_points='nagare.commands')
-        return commands.execute(
-            args=(command_name.split('-')[2:] if command_name.startswith('nagare-commands') else []) + sys.argv[1:]
-        )
+        return commands.execute(args=args[1:])
     except Exception:
         log.get_logger('nagare.services.exceptions').error('Unhandled exception', exc_info=True)
         return -1
