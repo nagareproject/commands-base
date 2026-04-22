@@ -17,10 +17,8 @@ import argcomplete
 
 
 def FilesCompleter():
-    return (
-        lambda **kw: ['files#file#_files']
-        if os.environ['_ARGCOMPLETE_SHELL'] == 'zsh'
-        else argcomplete.FilesCompleter()
+    return lambda **kw: (
+        ['files#file#_files'] if os.environ['_ARGCOMPLETE_SHELL'] == 'zsh' else argcomplete.FilesCompleter()
     )
 
 
@@ -43,7 +41,7 @@ class CompletionFinder(argcomplete.CompletionFinder):
         self._active_parsers = ActiveParsers()
 
     def _get_completions(self, *args):
-        completions = super(CompletionFinder, self)._get_completions(*args)
+        completions = super()._get_completions(*args)
 
         is_zsh = os.environ.pop('_ARGCOMPLETE_SHELL', '') == 'zsh'
         if (len(completions) != 1) or ('#' not in completions[0]):

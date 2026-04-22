@@ -64,7 +64,7 @@ def find_path(choices, name):
     return next(dropwhile(lambda dir: not os.path.isdir(dir), choices), '')
 
 
-class Banner(object):
+class Banner:
     def __init__(self, banner='', kakemono='', color=None, bright=False, padding='', file=None):
         self.banner = banner
         self.kakemono = kakemono.strip('\n').replace('|', ' ').splitlines()
@@ -108,7 +108,7 @@ class Banner(object):
 
 class ArgumentParser(commands.ArgumentParser):
     def __init__(self, banner, *args, **kw):
-        super(ArgumentParser, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.banner = banner
 
     def _print_message(self, message, file=None):
@@ -123,7 +123,7 @@ class ArgumentParser(commands.ArgumentParser):
 
         self.banner.end()
 
-        super(ArgumentParser, self).exit(status)
+        super().exit(status)
 
 
 class Command(commands.Command):
@@ -194,7 +194,7 @@ class Command(commands.Command):
 
     def execute(self, command_names=(), args=None):
         try:
-            return super(Command, self).execute(command_names, args)
+            return super().execute(command_names, args)
         except ConfigError as e:
             print(e)
             return -2
@@ -204,13 +204,13 @@ class Command(commands.Command):
         return ArgumentParser(banner, name, description=self.DESC)
 
     def set_arguments(self, parser):
-        super(Command, self).set_arguments(parser)
+        super().set_arguments(parser)
 
         if self.WITH_CONFIG_FILENAME:
             parser.add_argument('config_filename', nargs='?', help='configuration file')
 
     def parse(self, parser, args):
-        arguments = super(Command, self).parse(parser, args)
+        arguments = super().parse(parser, args)
 
         if self.WITH_CONFIG_FILENAME:
             try:
@@ -245,7 +245,7 @@ class Command(commands.Command):
 
 class Commands(commands.Commands):
     def usage_name(self, ljust=0):
-        return Style.BRIGHT + super(Commands, self).usage_name(ljust) + Style.RESET_ALL
+        return Style.BRIGHT + super().usage_name(ljust) + Style.RESET_ALL
 
     def create_banner(self, names):
         if names.startswith(('nagare', 'nagare-admin')):
@@ -272,14 +272,14 @@ class Commands(commands.Commands):
             help='show all the sub-commands of this level',
         )
 
-        super(Commands, self).set_arguments(parser)
+        super().set_arguments(parser)
 
     def run(self, command_names, all_commands, quiet, level_to_display, subcommands):
         if quiet or level_to_display:
             all_commands = True
 
         if subcommands or not all_commands:
-            return super(Commands, self).run(command_names, subcommands)
+            return super().run(command_names, subcommands)
 
         if quiet:
             self.display_command(len(command_names) == 1, level_to_display, 0)
@@ -291,7 +291,7 @@ class Commands(commands.Commands):
 
     def usage(self, names):
         with self.create_banner(' '.join(names)) as display:
-            super(Commands, self).usage(names, display)
+            super().usage(names, display)
 
     def display_command_verbose(self, top_level, level_to_display, level, display):
         if not level_to_display or (level + 1 == level_to_display):

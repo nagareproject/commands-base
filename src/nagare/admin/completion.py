@@ -37,7 +37,7 @@ class Completion(admin.Command):
             help='generate completion code for PowerShell',
         )
 
-        super(Completion, self).set_arguments(parser)
+        super().set_arguments(parser)
 
     def _run(self, names, shell):
         shell = shell or os.path.basename(os.environ.get('SHELL', '')) or 'bash'
